@@ -25,7 +25,10 @@ class BotController {
       '/clearchat': this.handleClearChat.bind(this),
       '/changemodel': this.handleChangeModel.bind(this),
       '/usage': this.handleUsage.bind(this),
-      '/help': this.handleHelp.bind(this)
+      '/help': this.handleHelp.bind(this),
+      '/adduser': this.handleAddUser.bind(this),
+      '/removeuser': this.handleRemoveUser.bind(this),
+      '/listusers': this.handleListUsers.bind(this)
     };
   }
 
@@ -346,6 +349,11 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
    * Handle /help command
    */
   protected async handleHelp(msg: TelegramBot.Message): Promise<void> {
+    const user = await userService.findOrCreateUser(
+      msg.from!.id,
+      msg.from!.username || 'unknown'
+    );
+
     const commands = [
       '/newchat - Start a fresh conversation',
       '/clearchat - Clear conversation history',
@@ -354,7 +362,147 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
       '/help - Show this help message'
     ];
 
+    // Add admin commands if user is admin
+    if (user.isAdmin) {
+      commands.push(
+        '',
+        'Admin Commands:',
+        '/adduser <telegram_id> - Add user to whitelist',
+        '/removeuser <telegram_id> - Remove user from whitelist',
+        '/listusers - List all users'
+      );
+    }
+
     await this.bot.sendMessage(msg.chat.id, commands.join('\n'));
+  }
+
+  /**
+   * Handle /adduser command (admin only)
+   */
+  protected async handleAddUser(msg: TelegramBot.Message): Promise<void> {
+    // Check if user is admin
+    const admin = await userService.findOrCreateUser(
+      msg.from!.id,
+      msg.from!.username || 'unknown'
+    );
+
+    if (!admin.isAdmin) {
+      await this.bot.sendMessage(msg.chat.id, 'This command is for administrators only.');
+      return;
+    }
+
+    // Parse telegram ID from command
+    const args = msg.text!.split(' ');
+    if (args.length !== 2) {
+      await this.bot.sendMessage(msg.chat.id, 'Usage: /adduser <telegram_id>');
+      return;
+    }
+
+    const telegramId = parseInt(args[1]);
+    if (isNaN(telegramId)) {
+      await this.bot.sendMessage(msg.chat.id, 'Invalid Telegram ID. Please provide a valid number.');
+      return;
+    }
+
+    try {
+      await userService.findOrCreateUser(telegramId, `user_${telegramId}`);
+      await userService.addToWhitelist(telegramId);
+      
+      await this.bot.sendMessage(
+        msg.chat.id,
+        `User ${telegramId} has been added to the whitelist.`
+      );
+    } catch (error) {
+      logError('Error adding user to whitelist', { error, telegramId });
+      await this.bot.sendMessage(
+        msg.chat.id,
+        'Failed to add user to whitelist. Please try again.'
+      );
+    }
+  }
+
+  /**
+   * Handle /removeuser command (admin only)
+   */
+  protected async handleRemoveUser(msg: TelegramBot.Message): Promise<void> {
+    // Check if user is admin
+    const admin = await userService.findOrCreateUser(
+      msg.from!.id,
+      msg.from!.username || 'unknown'
+    );
+
+    if (!admin.isAdmin) {
+      await this.bot.sendMessage(msg.chat.id, 'This command is for administrators only.');
+      return;
+    }
+
+    // Parse telegram ID from command
+    const args = msg.text!.split(' ');
+    if (args.length !== 2) {
+      await this.bot.sendMessage(msg.chat.id, 'Usage: /removeuser <telegram_id>');
+      return;
+    }
+
+    const telegramId = parseInt(args[1]);
+    if (isNaN(telegramId)) {
+      await this.bot.sendMessage(msg.chat.id, 'Invalid Telegram ID. Please provide a valid number.');
+      return;
+    }
+
+    try {
+      await userService.removeFromWhitelist(telegramId);
+      
+      await this.bot.sendMessage(
+        msg.chat.id,
+        `User ${telegramId} has been removed from the whitelist.`
+      );
+    } catch (error) {
+      logError('Error removing user from whitelist', { error, telegramId });
+      await this.bot.sendMessage(
+        msg.chat.id,
+        'Failed to remove user from whitelist. Please try again.'
+      );
+    }
+  }
+
+  /**
+   * Handle /listusers command (admin only)
+   */
+  protected async handleListUsers(msg: TelegramBot.Message): Promise<void> {
+    // Check if user is admin
+    const admin = await userService.findOrCreateUser(
+      msg.from!.id,
+      msg.from!.username || 'unknown'
+    );
+
+    if (!admin.isAdmin) {
+      await this.bot.sendMessage(msg.chat.id, 'This command is for administrators only.');
+      return;
+    }
+
+    try {
+      const users = await userService.getWhitelistedUsers();
+      
+      if (users.length === 0) {
+        await this.bot.sendMessage(msg.chat.id, 'No whitelisted users found.');
+        return;
+      }
+
+      const userList = users.map(user => 
+        `• ID: ${user.telegramId}\n  Username: ${user.username}\n  Admin: ${user.isAdmin ? 'Yes' : 'No'}`
+      ).join('\n\n');
+
+      await this.bot.sendMessage(
+        msg.chat.id,
+        `Whitelisted Users:\n\n${userList}`
+      );
+    } catch (error) {
+      logError('Error listing users', { error });
+      await this.bot.sendMessage(
+        msg.chat.id,
+        'Failed to list users. Please try again.'
+      );
+    }
   }
 
   /**
