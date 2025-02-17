@@ -14,13 +14,46 @@ A Node.js-based Telegram bot that provides access to various AI language models 
 
 ## Prerequisites
 
-- Node.js v18+
-- MongoDB v6+
+- Docker and Docker Compose
 - Telegram Bot Token
 - OpenRouter API Key
 - Admin Telegram IDs
 
-## Installation
+For local development without Docker:
+- Node.js v18+
+- MongoDB v6+
+
+## Docker Deployment
+
+1. Clone the repository and navigate to the project directory:
+```bash
+git clone [repository-url]
+cd llm-chat-bot
+```
+
+2. Create a .env file with your configuration (see Environment Variables section below).
+
+3. Build and start the containers:
+```bash
+docker-compose up -d
+```
+
+4. Monitor the logs:
+```bash
+docker-compose logs -f
+```
+
+5. Stop the containers:
+```bash
+docker-compose down
+```
+
+To rebuild the application after changes:
+```bash
+docker-compose up -d --build
+```
+
+## Local Installation
 
 1. Clone the repository:
 ```bash

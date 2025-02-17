@@ -1,4 +1,3 @@
-import { Document } from 'mongoose';
 import { Conversation, ConversationDocument, User } from '../models';
 import { IMessage } from '../models/types';
 import { ModelId } from '../config/openrouter.config';

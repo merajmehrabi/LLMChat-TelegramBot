@@ -1,5 +1,4 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { Document, Types } from 'mongoose';
 import { userService, conversationService, usageService } from '../services';
 import { UserDocument } from '../models/types';
 import { createError } from '../types/errors';
@@ -9,8 +8,8 @@ import env from '../config/env.config';
 import { ModelId, AVAILABLE_MODELS } from '../config/openrouter.config';
 
 class BotController {
-  private bot!: TelegramBot;
-  private commands: Record<string, (msg: TelegramBot.Message) => Promise<void>>;
+  protected bot!: TelegramBot;
+  protected commands: Record<string, (msg: TelegramBot.Message) => Promise<void>>;
 
   constructor() {
     logInfo('Initializing bot controller...', { 
@@ -78,7 +77,7 @@ class BotController {
   /**
    * Set up message handler for all messages
    */
-  private setupMessageHandler(): void {
+  protected setupMessageHandler(): void {
     logInfo('Setting up message handler...');
     
     this.bot.on('message', async (msg) => {
@@ -137,7 +136,7 @@ class BotController {
   /**
    * Set up error handler
    */
-  private setupErrorHandler(): void {
+  protected setupErrorHandler(): void {
     // Handle polling errors
     this.bot.on('polling_error', (error: any) => {
       const errorDetails = {
@@ -182,7 +181,7 @@ class BotController {
   /**
    * Check user access
    */
-  private async checkAccess(msg: TelegramBot.Message): Promise<void> {
+  protected async checkAccess(msg: TelegramBot.Message): Promise<void> {
     const hasAccess = await userService.checkAccess(msg.from!.id);
     if (!hasAccess) {
       throw createError(
@@ -197,7 +196,7 @@ class BotController {
   /**
    * Handle /start command
    */
-  private async handleStart(msg: TelegramBot.Message): Promise<void> {
+  protected async handleStart(msg: TelegramBot.Message): Promise<void> {
     const user: UserDocument = await userService.findOrCreateUser(
       msg.from!.id,
       msg.from!.username || 'unknown'
@@ -213,7 +212,7 @@ class BotController {
   /**
    * Verify bot connection
    */
-  private async verifyBotConnection(): Promise<void> {
+  protected async verifyBotConnection(): Promise<void> {
     try {
       const botInfo = await this.bot.getMe();
       logInfo('Bot connected successfully', { 
@@ -237,9 +236,9 @@ class BotController {
     }
   }
 
-  private async handleNewChat(msg: TelegramBot.Message): Promise<void> {
+  protected async handleNewChat(msg: TelegramBot.Message): Promise<void> {
     const defaultModel = env.defaultModel as ModelId;
-    const conversation = await conversationService.createConversation(
+    await conversationService.createConversation(
       msg.from!.id.toString(),
       defaultModel
     );
@@ -253,7 +252,7 @@ class BotController {
   /**
    * Handle /clearchat command
    */
-  private async handleClearChat(msg: TelegramBot.Message): Promise<void> {
+  protected async handleClearChat(msg: TelegramBot.Message): Promise<void> {
     // Get user's active conversation
     const conversations = await conversationService.getUserConversations(
       msg.from!.id.toString()
@@ -270,7 +269,7 @@ class BotController {
   /**
    * Handle /changemodel command
    */
-  private async handleChangeModel(msg: TelegramBot.Message): Promise<void> {
+  protected async handleChangeModel(msg: TelegramBot.Message): Promise<void> {
     // Get user's active conversation
     const conversations = await conversationService.getUserConversations(
       msg.from!.id.toString()
@@ -317,7 +316,7 @@ class BotController {
   /**
    * Handle /usage command
    */
-  private async handleUsage(msg: TelegramBot.Message): Promise<void> {
+  protected async handleUsage(msg: TelegramBot.Message): Promise<void> {
     // Get user's ObjectId
     const user: UserDocument = await userService.findOrCreateUser(
       msg.from!.id,
@@ -346,7 +345,7 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
   /**
    * Handle /help command
    */
-  private async handleHelp(msg: TelegramBot.Message): Promise<void> {
+  protected async handleHelp(msg: TelegramBot.Message): Promise<void> {
     const commands = [
       '/newchat - Start a fresh conversation',
       '/clearchat - Clear conversation history',
@@ -361,7 +360,7 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
   /**
    * Handle regular messages
    */
-  private async handleMessage(msg: TelegramBot.Message): Promise<void> {
+  protected async handleMessage(msg: TelegramBot.Message): Promise<void> {
     // Get user's active conversation
     const conversations = await conversationService.getUserConversations(
       msg.from!.id.toString()
@@ -390,7 +389,7 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
   /**
    * Handle errors
    */
-  private async handleError(
+  protected async handleError(
     msg: TelegramBot.Message,
     error: unknown
   ): Promise<void> {
@@ -405,6 +404,7 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
   }
 }
 
-// Export singleton instance
+// Create and export singleton instance
 export const botController = new BotController();
-export default botController;
+
+// Note: We don't export default here since we want to control the public API through index.ts

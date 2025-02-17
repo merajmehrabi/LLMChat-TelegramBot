@@ -1,5 +1,5 @@
 import { connectDB } from './config';
-import { botController } from './controllers';
+import { botControllerAPI } from './controllers';
 import { logError, logInfo } from './config/logger.config';
 
 // Initialize application
@@ -11,7 +11,7 @@ async function initializeApp() {
 
     // Initialize bot controller and wait for it to be ready
     logInfo('Initializing bot controller...');
-    await botController.initializeBot();
+    await botControllerAPI.initializeBot();
     logInfo('Bot controller initialized successfully');
 
     // Log startup

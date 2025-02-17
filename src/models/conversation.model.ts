@@ -21,7 +21,7 @@ const messageSchema = new Schema({
     type: String,
     required: true,
     enum: Object.keys(AVAILABLE_MODELS),
-    default: 'claude-2'
+    default: 'deepseek/deepseek-chat:free'
   } as { 
     type: StringConstructor;
     required: true;
@@ -53,7 +53,7 @@ const conversationSchema = new Schema<ConversationDocument, ConversationModel>({
     type: String,
     required: true,
     enum: Object.keys(AVAILABLE_MODELS),
-    default: 'claude-2'
+    default: 'deepseek/deepseek-chat:free'
   } as {
     type: StringConstructor;
     required: true;

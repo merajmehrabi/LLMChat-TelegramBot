@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
-    "clean": "rimraf build"
+    "clean": "rimraf build",
+    "db:init": "ts-node src/scripts/db-init.ts"
   },
   "keywords": [
     "telegram",

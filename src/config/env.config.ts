@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { cleanEnv, str, num, bool } from 'envalid';
+import { cleanEnv, str, num } from 'envalid';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -24,7 +24,7 @@ const env = cleanEnv(process.env, {
   ADMIN_TELEGRAM_IDS: str(), // Comma-separated list of admin Telegram IDs
 
   // OpenRouter Configuration
-  DEFAULT_MODEL: str({ default: 'claude-2' }),
+  DEFAULT_MODEL: str({ default: 'deepseek/deepseek-chat:free' }),
   MAX_TOKENS: num({ default: 2000 }),
   TEMPERATURE: num({ default: 0.7 }),
 

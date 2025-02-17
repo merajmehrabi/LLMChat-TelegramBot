@@ -1,10 +1,15 @@
-import botController from './bot.controller';
+import { botController } from './bot.controller';
 import { createError } from '../types/errors';
-import { formatErrorMessage, ErrorMessages } from '../utils';
+import { formatErrorMessage } from '../utils';
 
-// Export controllers
-export {
-  botController
+// Create a type-safe interface for the bot controller's public API
+interface BotControllerAPI {
+  initializeBot(): Promise<void>;
+}
+
+// Export only the public interface of the bot controller
+export const botControllerAPI: BotControllerAPI = {
+  initializeBot: botController.initializeBot.bind(botController)
 };
 
 // Export error utilities for controllers
@@ -19,8 +24,8 @@ export const createControllerError = (
   );
 };
 
-// Export default object
+// Export default object with public API
 export default {
-  botController,
+  botController: botControllerAPI,
   createControllerError
 };
