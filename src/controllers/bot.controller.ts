@@ -488,9 +488,28 @@ ${(Object.entries(stats.modelBreakdown) as Array<[ModelId, { tokens: number; cos
         return;
       }
 
-      const userList = users.map(user => 
-        `• ID: ${user.telegramId}\n  Username: ${user.username}\n  Admin: ${user.isAdmin ? 'Yes' : 'No'}`
-      ).join('\n\n');
+      // Get usage stats for each user
+      const userListPromises = users.map(async user => {
+        const stats = await usageService.getUserUsage(user.id);
+        const modelBreakdown = Object.entries(stats.modelBreakdown as Record<ModelId, { tokens: number; cost: number }>)
+          .map(([model, data]) => 
+            `    ${model}:
+      • Tokens: ${data.tokens.toLocaleString()}
+      • Cost: $${data.cost.toFixed(4)}`
+          )
+          .join('\n');
+
+        return `• ID: ${user.telegramId}
+  Username: ${user.username}
+  Admin: ${user.isAdmin ? 'Yes' : 'No'}
+  Usage:
+    • Total tokens: ${stats.totalTokens.toLocaleString()}
+    • Total cost: $${stats.totalCost.toFixed(4)}
+  Model Breakdown:
+${modelBreakdown}`;
+      });
+
+      const userList = (await Promise.all(userListPromises)).join('\n\n');
 
       await this.bot.sendMessage(
         msg.chat.id,
