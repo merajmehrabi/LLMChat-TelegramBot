@@ -14,11 +14,12 @@ COPY . .
 # Build TypeScript code
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Make entrypoint script executable
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
 
-# Start the application
-CMD ["node", "build/index.js"]
+# Set entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]

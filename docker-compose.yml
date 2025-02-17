@@ -3,8 +3,6 @@ version: '3.8'
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/llm-chat-bot?authSource=admin
@@ -13,30 +11,14 @@ services:
     volumes:
       - ./logs:/app/logs
     depends_on:
-      db-init:
-        condition: service_completed_successfully
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  db-init:
-    build: .
-    command: npm run db:init
-    environment:
-      - NODE_ENV=production
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/llm-chat-bot?authSource=admin
-    env_file:
-      - .env
-    depends_on:
       mongodb:
         condition: service_healthy
+    restart: unless-stopped
     networks:
       - app-network
 
   mongodb:
     image: mongo:6
-    ports:
-      - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     environment:
